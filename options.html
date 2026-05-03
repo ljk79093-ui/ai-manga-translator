@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI漫画翻译 - 选项</title>
+  <style>
+    body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    h3 { margin-top: 0; color: #444; }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #555;
+      position: relative;
+    }
+    label[data-tooltip]::after {
+      content: '❓';
+      font-size: 12px;
+      margin-left: 6px;
+      cursor: help;
+    }
+    label[data-tooltip]:hover::after {
+      color: #4CAF50;
+    }
+    input, textarea, select {
+      width: 100%;
+      margin-top: 5px;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      color: #333;
+      transition: border-color 0.2s, background 0.3s, color 0.3s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #45a049; }
+    button.secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    button.secondary:hover { background: #e0e0e0; }
+    .status {
+      margin-top: 15px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      transition: opacity 0.3s;
+    }
+    .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
+    .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; font-weight: bold; }
+    .status-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; font-weight: bold; }
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; }
+    hr {
+      margin: 20px 0;
+      border: 0;
+      border-top: 1px solid #ddd;
+    }
+    .note {
+      font-size: 0.85em;
+      color: #777;
+      margin-top: 5px;
+    }
+    details {
+      margin-top: 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px 12px;
+      background: #fafafa;
+    }
+    details summary {
+      font-weight: bold;
+      cursor: pointer;
+      outline: none;
+      color: #4CAF50;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      margin-right: 8px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1e1e1e; color: #ccc; }
+      h3 { color: #ddd; }
+      label { color: #aaa; }
+      input, textarea, select {
+        background: #2a2a2a;
+        color: #eee;
+        border-color: #555;
+      }
+      input:focus, textarea:focus, select:focus { border-color: #4CAF50; }
+      button.secondary { background: #444; color: #ddd; }
+      button.secondary:hover { background: #555; }
+      details { background: #2a2a2a; border-color: #555; }
+      hr { border-top-color: #444; }
+      .note { color: #999; }
+      .status-success { background: #2a4d3e; color: #a3e4b5; border-color: #3c6e50; }
+      .status-error { background: #4d2a2a; color: #f0a6a6; border-color: #6e3c3c; }
+      .status-info { background: #2a3d4d; color: #a6d0f0; border-color: #3c5f6e; }
+    }
+  </style>
+</head>
+<body>
+  <h3>⚙️ AI漫画翻译 - 选项设置</h3>
+
+  <label data-tooltip="选择翻译采用的模式">翻译模式</label>
+  <select id="translationMode">
+    <option value="vision">视觉模型（如 GPT-4V）</option>
+    <option value="ocr">OCR + 文本翻译</option>
+    <option value="rerank">精致机翻 (OCR + 重排序 + 翻译)</option>
+  </select>
+
+  <hr>
+
+  <!-- 视觉模式设置 -->
+  <div id="visionSettings">
+    <label data-tooltip="OpenAI 或兼容的 API Key">API Key:</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+    <label data-tooltip="视觉模型名称，如 gpt-4-vision-preview">视觉模型名称:</label>
+    <input type="text" id="model" placeholder="例如 gpt-4-vision-preview" />
+    <label data-tooltip="API 请求完整的 URL">API 端点:</label>
+    <input type="text" id="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+  </div>
+
+  <!-- OCR 模式设置 -->
+  <div id="ocrSettings" style="display:none;">
+    <details open>
+      <summary>🔍 OCR 设置</summary>
+      <label data-tooltip="OCR 服务的完整请求地址">OCR API 端点</label>
+      <input type="text" id="ocrApiEndpoint" placeholder="例如 https://vision.googleapis.com/v1/images:annotate?key=..." />
+      <div class="note">如果使用 Google Vision，请填写完整 URL（包含 ?key=）；其他服务请填写完整请求地址。</div>
+      <label data-tooltip="OCR 服务的 API 密钥（若端点已包含可留空）">OCR API 密钥</label>
+      <input type="password" id="ocrApiKey" placeholder="输入你的 OCR API 密钥（如需）" />
+      <div class="note">如果端点中已包含密钥，此处可留空。</div>
+      <label data-tooltip="OCR 模型类型，Google Vision 固定为 TEXT_DETECTION">OCR 模型名称 (可选)</label>
+      <input type="text" id="ocrModel" placeholder="例如 TEXT_DETECTION" value="TEXT_DETECTION" />
+      <div class="note">Google Vision 固定为 TEXT_DETECTION，其他服务按需填写。</div>
+      <label data-tooltip="当使用视觉模型进行 OCR 时发送的提示词，留空则使用默认">视觉模型 OCR 提示词 (可选)</label>
+      <textarea id="ocrVisionPrompt" rows="3" placeholder="留空则使用默认提示词">请检测图片中的所有文字区域，返回一个 JSON 数组。每个元素包含 "text"（文字内容）和 "bbox"（坐标 [x1, y1, x2, y2]）。坐标可以是像素值或归一化值（0-1）。如果返回像素坐标，请确保 x1&lt;x2, y1&lt;y2。只输出纯 JSON，不要包含其他解释。</textarea>
+      <div class="note">留空则使用默认提示词。</div>
+    </details>
+    <details open>
+      <summary>🌐 翻译设置</summary>
+      <label data-tooltip="翻译 API 的请求地址（OpenAI 兼容）">翻译 API 端点</label>
+      <input type="text" id="translateApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+      <div class="note">应与 OpenAI Chat Completion 格式兼容。</div>
+      <label data-tooltip="翻译 API 的访问密钥">翻译 API 密钥</label>
+      <input type="password" id="translateApiKey" placeholder="sk-..." />
+      <label data-tooltip="翻译使用的模型，如 gpt-3.5-turbo">翻译模型名称</label>
+      <input type="text" id="translateModel" placeholder="例如 gpt-3.5-turbo" />
+      <label data-tooltip="自定义翻译提示词，留空使用默认">翻译提示词 (可选)</label>
+      <textarea id="ocrTranslatePrompt" rows="2" placeholder="留空则使用默认提示词">You are a translator. Translate the following text into {{language}}. Keep the original meaning. Return only the translated text, no explanations.</textarea>
+      <div class="note">使用 {{language}} 作为目标语言的占位符，会自动替换。</div>
+    </details>
+  </div>
+
+  <!-- 重排序模式设置 -->
+  <div id="rerankSettings" style="display:none;">
+    <details open>
+      <summary>🔍 OCR 设置</summary>
+      <label data-tooltip="OCR API 端点">OCR API 端点</label>
+      <input type="text" id="rerankOcrApiEndpoint" placeholder="例如 https://vision.googleapis.com/v1/images:annotate?key=..." />
+      <label data-tooltip="OCR API 密钥">OCR API 密钥</label>
+      <input type="password" id="rerankOcrApiKey" placeholder="输入你的 OCR API 密钥" />
+      <label data-tooltip="OCR 模型名称">OCR 模型名称</label>
+      <input type="text" id="rerankOcrModel" value="TEXT_DETECTION" />
+      <label data-tooltip="视觉模型 OCR 提示词">视觉模型 OCR 提示词 (可选)</label>
+      <textarea id="rerankOcrVisionPrompt" rows="3" placeholder="留空则使用默认提示词">请检测图片中的所有文字区域，返回一个 JSON 数组。每个元素包含 "text"（文字内容）和 "bbox"（坐标 [x1, y1, x2, y2]）。坐标可以是像素值或归一化值（0-1）。如果返回像素坐标，请确保 x1&lt;x2, y1&lt;y2。只输出纯 JSON，不要包含其他解释。</textarea>
+      <div class="note">留空则使用默认提示词。</div>
+    </details>
+    <details open>
+      <summary>🔄 重排序设置</summary>
+      <label data-tooltip="重排序 API 端点">重排序 API 端点</label>
+      <input type="text" id="rerankApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+      <label data-tooltip="重排序 API 密钥">重排序 API 密钥</label>
+      <input type="password" id="rerankApiKey" placeholder="sk-..." />
+      <label data-tooltip="用于重排序的模型名称">重排序模型名称</label>
+      <input type="text" id="rerankModel" placeholder="例如 rerank-model" />
+    </details>
+    <details open>
+      <summary>🌐 翻译设置</summary>
+      <label data-tooltip="翻译 API 端点">翻译 API 端点</label>
+      <input type="text" id="rerankTranslateApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+      <label data-tooltip="翻译 API 密钥">翻译 API 密钥</label>
+      <input type="password" id="rerankTranslateApiKey" placeholder="sk-..." />
+      <label data-tooltip="翻译模型名称">翻译模型名称</label>
+      <input type="text" id="rerankTranslateModel" placeholder="例如 gpt-3.5-turbo" />
+      <label data-tooltip="翻译提示词，留空使用默认">翻译提示词 (可选)</label>
+      <textarea id="rerankTranslatePrompt" rows="2" placeholder="留空则使用默认提示词">You are a translator. Translate the following text into {{language}}. Keep the original meaning. Return only the translated text, no explanations.</textarea>
+      <div class="note">使用 {{language}} 作为目标语言的占位符，会自动替换。</div>
+    </details>
+  </div>
+
+  <label data-tooltip="希望翻译成的语言，如 中文、English">目标语言:</label>
+  <input type="text" id="targetLang" value="中文" placeholder="例如 中文、英文" />
+
+  <label data-tooltip="视觉模式下的自定义提示词">自定义提示词 (视觉模式):</label>
+  <textarea id="prompt" rows="3">你是一个漫画翻译助手。请将这幅漫画中所有文字翻译成{{language}}。如果图片中没有文字，请返回“无文字”。只返回翻译后的文本，不要额外解释。</textarea>
+  <div class="note">使用 {{language}} 作为目标语言的占位符。</div>
+
+  <hr>
+
+  <h3>悬浮图标设置</h3>
+  <label data-tooltip="自定义悬浮按钮图标 URL，留空使用默认">图标图片 URL</label>
+  <input type="url" id="floatIconUrl" placeholder="https://example.com/icon.png">
+  <div class="field-row">
+    <div class="field">
+      <label data-tooltip="图标宽度（像素）">宽度 (px)</label>
+      <input type="number" id="floatIconWidth" min="16" max="200" value="48">
+    </div>
+    <div class="field">
+      <label data-tooltip="图标高度（像素）">高度 (px)</label>
+      <input type="number" id="floatIconHeight" min="16" max="200" value="48">
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; margin-top: 15px;">
+    <label class="switch">
+      <input type="checkbox" id="floatButtonEnabled" checked>
+      <span class="slider"></span>
+    </label>
+    <label for="floatButtonEnabled" style="margin: 0; font-weight: normal;" data-tooltip="在页面上显示悬浮翻译按钮">启用悬浮窗</label>
+  </div>
+
+  <hr>
+
+  <details open>
+    <summary>🚀 性能设置</summary>
+    <div class="field">
+      <label data-tooltip="同时翻译的图片数量">并发翻译数量</label>
+      <input type="number" id="maxConcurrent" min="1" max="20" value="3">
+      <div class="note">建议3-6。</div>
+    </div>
+    <div class="field">
+      <label data-tooltip="每次 API 请求的最大 token 数">Token 限制数</label>
+      <input type="number" id="maxTokens" min="100" max="16000" value="1000">
+      <div class="note">建议 500-2000。</div>
+    </div>
+    <div class="field">
+      <label data-tooltip="发送前图片的最大边长（像素）">图片压缩尺寸 (px)</label>
+      <input type="number" id="imageMaxDimension" min="256" max="4096" value="1024">
+      <div class="note">建议 512-2048。</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>🎨 翻译框样式</summary>
+    <div class="field-row">
+      <div class="field">
+        <label data-tooltip="翻译框的背景颜色">背景颜色</label>
+        <input type="color" id="boxBgColor" value="#000000">
+      </div>
+      <div class="field">
+        <label data-tooltip="翻译框的文字颜色">字体颜色</label>
+        <input type="color" id="boxTextColor" value="#ffffff">
+      </div>
+    </div>
+    <div class="field">
+      <label data-tooltip="翻译框的不透明度">不透明度 (0.1-1)</label>
+      <input type="range" id="boxOpacity" min="0.1" max="1" step="0.1" value="0.6">
+      <span id="opacityValue">0.6</span>
+    </div>
+  </details>
+
+  <hr>
+
+  <h3>🛠 开发者选项</h3>
+  <div style="display: flex; align-items: center; margin-top: 15px;">
+    <label class="switch">
+      <input type="checkbox" id="devMode">
+      <span class="slider"></span>
+    </label>
+    <label for="devMode" style="margin: 0; font-weight: normal;" data-tooltip="启用后所有翻译请求均返回模拟数据，不消耗 API 额度">调试模式 (Mock 数据)</label>
+  </div>
+  <div class="note">⚠ 开启后将跳过真实 API 调用，用于测试 UI 与交互流程。</div>
+
+  <details>
+    <summary>🗄️ 翻译缓存后端</summary>
+    <label data-tooltip="FastAPI 缓存服务的完整地址">缓存 API 地址</label>
+    <input type="text" id="cacheApiUrl" placeholder="http://localhost:3000" />
+    <div class="note">填写你的 FastAPI 服务地址，留空则不使用缓存。</div>
+    <label data-tooltip="API 访问密钥（与后端 .env 中配置的一致）">缓存 API 密钥 (可选)</label>
+    <input type="password" id="cacheApiKey" placeholder="留空则不验证" />
+    <div class="note">如果后端未设置密钥，此处留空。</div>
+  </details>
+
+  <details>
+    <summary>🛠 翻译后处理</summary>
+    <div style="display: flex; align-items: center; margin-top: 10px;">
+      <label class="switch">
+        <input type="checkbox" id="enablePostprocess" checked>
+        <span class="slider"></span>
+      </label>
+      <label for="enablePostprocess" style="margin: 0; font-weight: normal;">启用翻译后处理（拟声词、繁简转换等）</label>
+    </div>
+    <div class="note">关闭后译文将直接显示模型输出，不做本地修正。</div>
+  </details>
+
+  <details>
+    <summary>🎨 气泡排版</summary>
+    <label data-tooltip="选择预设的排版样式">预设样式</label>
+    <select id="bubblePreset">
+      <option value="mangaClassic">经典漫画（左对齐，圆角气泡）</option>
+      <option value="webtoon">网漫风格（居中，方形）</option>
+      <option value="elegantJustify">优雅两端对齐</option>
+      <option value="verticalClassic">竖排经典</option>
+      <option value="default">默认（居中）</option>
+    </select>
+    <div class="note">排版样式将影响翻译文本的自动换行与对齐方式。</div>
+  </details>
+
+  <hr>
+
+  <div id="statsPanel">
+    <h3>📊 使用统计</h3>
+    <p>累计翻译图片: <strong id="statTotal">0</strong></p>
+    <p>成功率: <strong id="statRate">0%</strong></p>
+    <p>各模式使用次数:</p>
+    <ul id="statModes"></ul>
+    <button id="resetStatsBtn" class="secondary">重置统计</button>
+  </div>
+
+  <details>
+    <summary>🗃️ 缓存管理</summary>
+    <p>内存缓存图片数: <strong id="memCacheCount">0</strong></p>
+    <button id="clearMemCacheBtn" class="secondary">清空内存缓存</button>
+    <p>MySQL 缓存状态: <strong id="dbCacheStatus">未知（需要后端支持）</strong></p>
+    <button id="clearDBCacheBtn" class="secondary">清空 MySQL 缓存</button>
+  </details>
+
+  <div id="status" class="status"></div>
+  <button id="resetDefaultsBtn" class="secondary">🔁 恢复默认设置</button>
+
+  <script src="options.js"></script>
+</body>
+</html>

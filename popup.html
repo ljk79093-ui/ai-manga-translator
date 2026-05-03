@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI漫画翻译</title>
+  <style>
+    body {
+      width: 320px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #333;
+    }
+    h3 { margin-top: 0; }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #555;
+    }
+    input, textarea, select {
+      width: 100%;
+      margin-top: 5px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 6px;
+      background: #fff;
+      color: #333;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 8px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button:hover { background: #45a049; }
+    .status {
+      margin-top: 10px;
+      font-size: 0.9em;
+      padding: 8px;
+      border-radius: 4px;
+      transition: opacity 0.3s;
+    }
+    .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
+    .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; font-weight: bold; }
+    .status-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; font-weight: bold; }
+
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; }
+    hr { margin: 15px 0; border: 0; border-top: 1px solid #ccc; }
+    .note { font-size: 0.85em; color: #777; margin-top: 2px; }
+
+    /* 滑动开关 */
+    .switch { position: relative; display: inline-block; width: 40px; height: 20px; margin-right: 8px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .2s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px;
+      left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #2b2b2b; color: #ddd; }
+      label { color: #aaa; }
+      input, textarea, select { background: #3a3a3a; color: #eee; border-color: #555; }
+      hr { border-top-color: #444; }
+      .note { color: #999; }
+    }
+  </style>
+</head>
+<body>
+  <h3>AI漫画翻译</h3>
+
+  <!-- 翻译模式选择 -->
+  <label>翻译模式</label>
+  <select id="translationMode">
+    <option value="vision">视觉模型（如 GPT-4V）</option>
+    <option value="ocr">OCR + 文本翻译</option>
+    <option value="rerank">精致机翻 (OCR + 重排序 + 翻译)</option>
+  </select>
+
+  <hr>
+
+  <!-- 视觉模式配置 -->
+  <div id="visionSettings">
+    <label>API Key:</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+
+    <label>视觉模型名称:</label>
+    <input type="text" id="model" placeholder="例如 gpt-4-vision-preview" />
+
+    <label>API 端点:</label>
+    <input type="text" id="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+  </div>
+
+  <!-- OCR 模式配置 -->
+  <div id="ocrSettings" style="display:none;">
+    <h4>OCR 设置</h4>
+    <label>OCR API 端点</label>
+    <input type="text" id="ocrApiEndpoint" placeholder="例如 https://vision.googleapis.com/v1/images:annotate?key=..." />
+    <div class="note">Google Vision 需完整 URL 含 ?key=</div>
+
+    <label>OCR API 密钥</label>
+    <input type="password" id="ocrApiKey" placeholder="输入你的 OCR API 密钥（如需）" />
+
+    <label>OCR 模型名称 (可选)</label>
+    <input type="text" id="ocrModel" placeholder="TEXT_DETECTION" value="TEXT_DETECTION" />
+
+    <label>视觉模型 OCR 提示词 (可选)</label>
+    <textarea id="ocrVisionPrompt" rows="2" placeholder="留空则使用默认提示词">请检测图片中的所有文字区域，返回一个 JSON 数组。每个元素包含 "text"（文字内容）和 "bbox"（坐标 [x1, y1, x2, y2]）。坐标可以是像素值或归一化值（0-1）。如果返回像素坐标，请确保 x1&lt;x2, y1&lt;y2。只输出纯 JSON，不要包含其他解释。</textarea>
+
+    <h4>翻译设置</h4>
+    <label>翻译 API 端点</label>
+    <input type="text" id="translateApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+
+    <label>翻译 API 密钥</label>
+    <input type="password" id="translateApiKey" placeholder="sk-..." />
+
+    <label>翻译模型名称</label>
+    <input type="text" id="translateModel" placeholder="例如 gpt-3.5-turbo" />
+
+    <label>翻译提示词 (可选)</label>
+    <textarea id="ocrTranslatePrompt" rows="2" placeholder="留空则使用默认提示词">You are a translator. Translate the following text into {{language}}. Keep the original meaning. Return only the translated text, no explanations.</textarea>
+    <div class="note">使用 {{language}} 作为目标语言的占位符，会自动替换。</div>
+  </div>
+
+  <!-- 重排序模式配置 -->
+  <div id="rerankSettings" style="display:none;">
+    <h4>OCR 设置</h4>
+    <label>OCR API 端点</label>
+    <input type="text" id="rerankOcrApiEndpoint" placeholder="https://vision.googleapis.com/v1/images:annotate?key=..." />
+    <label>OCR API 密钥</label>
+    <input type="password" id="rerankOcrApiKey" placeholder="输入你的 OCR API 密钥" />
+    <label>OCR 模型名称</label>
+    <input type="text" id="rerankOcrModel" value="TEXT_DETECTION" />
+
+    <h4>重排序设置</h4>
+    <label>重排序 API 端点</label>
+    <input type="text" id="rerankApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+    <label>重排序 API 密钥</label>
+    <input type="password" id="rerankApiKey" placeholder="sk-..." />
+    <label>重排序模型名称</label>
+    <input type="text" id="rerankModel" placeholder="例如 rerank-model" />
+
+    <h4>翻译设置</h4>
+    <label>翻译 API 端点</label>
+    <input type="text" id="rerankTranslateApiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" />
+    <label>翻译 API 密钥</label>
+    <input type="password" id="rerankTranslateApiKey" placeholder="sk-..." />
+    <label>翻译模型名称</label>
+    <input type="text" id="rerankTranslateModel" placeholder="例如 gpt-3.5-turbo" />
+
+    <label>翻译提示词 (可选)</label>
+    <textarea id="rerankTranslatePrompt" rows="2" placeholder="留空则使用默认提示词">You are a translator. Translate the following text into {{language}}. Keep the original meaning. Return only the translated text, no explanations.</textarea>
+    <div class="note">使用 {{language}} 作为目标语言的占位符，会自动替换。</div>
+  </div>
+
+  <!-- 目标语言与提示词 -->
+  <label>目标语言:</label>
+  <input type="text" id="targetLang" value="中文" placeholder="例如 中文、英文" />
+
+  <label>自定义提示词 (视觉模式):</label>
+  <textarea id="prompt" rows="3">你是一个漫画翻译助手。请将这幅漫画中所有文字翻译成{{language}}。如果图片中没有文字，请返回“无文字”。只返回翻译后的文本，不要额外解释。</textarea>
+
+  <hr>
+
+  <!-- 悬浮图标设置 -->
+  <h3>悬浮图标设置</h3>
+  <label>图标图片 URL (留空则使用默认)</label>
+  <input type="url" id="floatIconUrl" placeholder="https://example.com/icon.png">
+
+  <div class="field-row">
+    <div class="field">
+      <label>宽度 (px)</label>
+      <input type="number" id="floatIconWidth" min="16" max="200" value="48">
+    </div>
+    <div class="field">
+      <label>高度 (px)</label>
+      <input type="number" id="floatIconHeight" min="16" max="200" value="48">
+    </div>
+  </div>
+
+  <!-- 悬浮窗启用开关 -->
+  <div style="display: flex; align-items: center; margin-top: 10px;">
+    <label class="switch">
+      <input type="checkbox" id="floatButtonEnabled" checked>
+      <span class="slider"></span>
+    </label>
+    <label for="floatButtonEnabled" style="margin: 0; font-weight: normal;">启用悬浮窗</label>
+  </div>
+
+  <hr>
+
+  <!-- 性能参数 -->
+  <h3>性能设置</h3>
+  <div class="field">
+    <label>并发翻译数量</label>
+    <input type="number" id="maxConcurrent" min="1" max="20" value="3">
+    <div class="note">建议3-6</div>
+  </div>
+
+  <div class="field">
+    <label>Token 限制数</label>
+    <input type="number" id="maxTokens" min="100" max="16000" value="1000">
+    <div class="note">建议 500-2000</div>
+  </div>
+
+  <div class="field">
+    <label>图片压缩尺寸 (px)</label>
+    <input type="number" id="imageMaxDimension" min="256" max="4096" value="1024">
+    <div class="note">建议 512-2048</div>
+  </div>
+
+  <hr>
+
+  <!-- 后处理开关与气泡样式 -->
+  <div style="display: flex; align-items: center; margin-top: 10px;">
+    <label class="switch">
+      <input type="checkbox" id="enablePostprocess" checked>
+      <span class="slider"></span>
+    </label>
+    <label for="enablePostprocess" style="margin: 0; font-weight: normal;">启用翻译后处理</label>
+  </div>
+  <div class="note">对译文进行拟声词、繁简转换等本地修正</div>
+
+  <div style="margin-top: 10px;">
+    <label>气泡排版样式</label>
+    <select id="bubblePreset">
+      <option value="mangaClassic">经典漫画（左对齐）</option>
+      <option value="webtoon">网漫风格（居中）</option>
+      <option value="elegantJustify">优雅两端对齐</option>
+      <option value="verticalClassic">竖排经典</option>
+      <option value="default">默认（居中）</option>
+    </select>
+  </div>
+
+  <!-- 操作按钮 -->
+  <button id="save">保存设置</button>
+  <button id="translate">翻译当前页面</button>
+  <button id="capture">📸 截屏翻译</button>
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "AI漫画翻译",
+  "version": "4.0.99",
+  "default_locale": "zh_CN",
+  "description": "翻译漫画图片中的文字，支持视觉模型和OCR+翻译以及精致翻译(OCR+重排序+翻译)三模式(最好的版本)",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["bubble-renderer.js","bubble-fit-engine.js", "content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
