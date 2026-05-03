@@ -16,9 +16,13 @@
 ## 安装步骤
 
 1.下载本仓库 ZIP 或克隆到本地
+
 2.打开 Edge，在地址栏输入 edge://extensions 并回车
+
 3.开启左侧边栏的「开发人员模式」开关
+
 4.点击「加载解压缩的扩展」，选择项目的根文件夹（即包含 manifest.json 的那个文件夹）
+
 5.打开任意漫画网站，点击悬浮按钮开始翻译
 
 ## 配置说明
@@ -29,25 +33,45 @@
 
 ## 目录结构
 extension-folder/
+
 ├── manifest.json
+
 ├── background.js
+
 ├── content.js
+
 ├── popup.html / popup.js
+
 ├── options.html / options.js
+
 ├── bubble-renderer.js
+
 ├── bubble-fit-engine.js
+
 ├── postprocess.js
+
 ├── crypto-utils.js
+
 ├── adapters/
+
 │ ├── azure.js
+
 │ └── deepl.js
+
 ├── _locales/
+
 │ ├── zh_CN/messages.json
+
 │ └── en/messages.json
+
 ├── backend/
+
 │ ├── main.py
+
 │ ├── requirements.txt
+
 │ └── .env.example
+
 └── README.md
 
 ## 声明
